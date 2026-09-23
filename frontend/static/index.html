@@ -549,11 +549,6 @@ async function loadPersonalizedSuggestions() {
         btn.className = "chip";
         btn.textContent = item.label;
         btn.dataset.prompt = item.prompt;
-        btn.addEventListener("click", (ev) => {
-          ev.preventDefault();
-          ev.stopPropagation();
-          submitPrompt(item.prompt);
-        });
         wrapper.appendChild(btn);
       });
     }
@@ -561,6 +556,16 @@ async function loadPersonalizedSuggestions() {
     console.warn("Failed to load personalized suggestions:", e);
   }
 }
+
+// Global Event Delegation on #prompts guarantees every static or dynamic chip works instantly!
+document.getElementById("prompts").addEventListener("click", (ev) => {
+  const chip = ev.target.closest(".chip");
+  if (!chip) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  const promptText = chip.dataset.prompt || chip.textContent;
+  submitPrompt(promptText);
+});
 
 document.getElementById("btnClear").addEventListener("click", () => {
   log.innerHTML = "";

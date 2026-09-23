@@ -272,41 +272,64 @@
   .a2text.a2-caption { font-size: 0.85rem; color: var(--text-secondary); }
   .a2divider { border: none; border-top: 1px solid var(--border); margin: 0.5rem 0; width: 100%; }
   .a2img { max-width: 100%; border-radius: 10px; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-  .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 1.25rem; line-height: 1; vertical-align: middle; color: var(--accent); }
+  /* Accessibility & Focus Rings */
+  .skip-link {
+    position: absolute;
+    top: -50px;
+    left: 10px;
+    background: var(--accent);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 6px;
+    z-index: 1000;
+    transition: top 0.2s ease;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .skip-link:focus {
+    top: 10px;
+  }
+  :focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
 </style>
 </head>
 <body>
-<header>
+<a href="#input" class="skip-link">Skip to chat input</a>
+<header role="banner">
   <div class="header-brand">
-    <div class="header-title">🎲 Board Game Night Host</div>
+    <h1 class="header-title" style="font-size:1.15rem;margin:0;">🎲 Board Game Night Host</h1>
     <div class="header-sub">AI Rules Assistant & Game Recommendation Engine</div>
   </div>
   <div class="header-actions">
-    <button type="button" class="btn-clear" id="btnClear" title="Clear chat log and start a new session">
+    <button type="button" class="btn-clear" id="btnClear" aria-label="Clear chat session history" title="Clear chat log and start a new session">
       🗑️ Clear Session
     </button>
-    <div class="header-status">
-      <span class="status-dot"></span> Online
+    <div class="header-status" aria-label="Status: Online">
+      <span class="status-dot" aria-hidden="true"></span> Online
     </div>
   </div>
 </header>
-<div id="log"></div>
-<div class="prompts-container">
-  <div class="prompts-wrapper" id="prompts">
-    <button type="button" class="chip" data-prompt="Analyze the current weather and environment to recommend a cozy rainy day game">🌧️ Environmental Game Vibe</button>
-    <button type="button" class="chip" data-prompt="Create a gaming group called 'Friday Night Strategists'">👥 Create Gaming Squad</button>
-    <button type="button" class="chip" data-prompt="Start a session planner for 'Friday Night Strategists' this Saturday at 7pm with Catan, Wingspan, and Ticket to Ride">📅 Launch Game Night Planner</button>
-    <button type="button" class="chip" data-prompt="Recommend a game for 4 players (under 90 mins)">🎲 4-Player Games</button>
-    <button type="button" class="chip" data-prompt="What are the key setup rules for Catan?">📖 Catan Setup Rules</button>
-    <button type="button" class="chip" data-prompt="Generate custom box art for a fantasy board game">🎨 Generate Box Art</button>
+<main role="main" id="main-content" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+  <div id="log" role="log" aria-live="polite" aria-atomic="false" aria-label="Chat Conversation Log"></div>
+  <section class="prompts-container" aria-label="Suggested Prompts">
+    <div class="prompts-wrapper" id="prompts" role="region" aria-label="Interactive prompt chips">
+      <button type="button" class="chip" aria-label="Analyze weather and recommend cozy game" data-prompt="Analyze the current weather and environment to recommend a cozy rainy day game">🌧️ Environmental Game Vibe</button>
+      <button type="button" class="chip" aria-label="Create gaming group Friday Night Strategists" data-prompt="Create a gaming group called 'Friday Night Strategists'">👥 Create Gaming Squad</button>
+      <button type="button" class="chip" aria-label="Launch game night planner" data-prompt="Start a session planner for 'Friday Night Strategists' this Saturday at 7pm with Catan, Wingspan, and Ticket to Ride">📅 Launch Game Night Planner</button>
+      <button type="button" class="chip" aria-label="Recommend 4-player games under 90 minutes" data-prompt="Recommend a game for 4 players (under 90 mins)">🎲 4-Player Games</button>
+      <button type="button" class="chip" aria-label="Key setup rules for Catan" data-prompt="What are the key setup rules for Catan?">📖 Catan Setup Rules</button>
+      <button type="button" class="chip" aria-label="Generate custom box art" data-prompt="Generate custom box art for a fantasy board game">🎨 Generate Box Art</button>
+    </div>
+  </section>
+  <div class="form-container">
+    <form id="form" role="search" aria-label="Send message to AI host">
+      <input id="input" placeholder="Ask about games, rules, trivia, or art…" autocomplete="off" autofocus aria-label="Type your message or game question here">
+      <button type="submit" aria-label="Send message">Send <span>&rarr;</span></button>
+    </form>
   </div>
-</div>
-<div class="form-container">
-  <form id="form">
-    <input id="input" placeholder="Ask about games, rules, trivia, or art…" autocomplete="off" autofocus>
-    <button type="submit">Send <span>&rarr;</span></button>
-  </form>
-</div>
+</main>
 
 <script>
 const log = document.getElementById("log");
@@ -495,10 +518,16 @@ const promptsWrapper = document.getElementById("prompts");
 function setBusy(busy) {
   isPending = busy;
   input.disabled = busy;
+  form.setAttribute("aria-busy", busy ? "true" : "false");
   if (submitBtn) submitBtn.disabled = busy;
   if (promptsWrapper) {
-    if (busy) promptsWrapper.classList.add("disabled");
-    else promptsWrapper.classList.remove("disabled");
+    if (busy) {
+      promptsWrapper.classList.add("disabled");
+      promptsWrapper.setAttribute("aria-disabled", "true");
+    } else {
+      promptsWrapper.classList.remove("disabled");
+      promptsWrapper.removeAttribute("aria-disabled");
+    }
   }
 }
 

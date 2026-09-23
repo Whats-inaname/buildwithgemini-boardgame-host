@@ -43,6 +43,7 @@ from app.tools import (
     get_board_game_rules,
     get_board_game_trivia,
     log_game_session,
+    search_board_game_rag_docs,
     search_board_games,
 )
 
@@ -142,6 +143,7 @@ root_agent = Agent(
         search_board_games,
         get_board_game_rules,
         add_board_game_to_catalog,
+        search_board_game_rag_docs,
         log_game_session,
         get_board_game_trivia,
         geocode_address,

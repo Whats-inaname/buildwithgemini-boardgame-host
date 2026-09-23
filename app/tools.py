@@ -106,7 +106,7 @@ def add_board_game_to_catalog(
     description: str,
     rules_summary: str = "",
 ) -> str:
-    """Adds a new board game to the Firestore catalog.
+    """Adds a new board game to the Firestore catalog, auto-generates a RAG game document, and uploads it to Cloud Storage.
 
     Args:
         title: The title of the board game.
@@ -120,6 +120,9 @@ def add_board_game_to_catalog(
     Returns:
         Confirmation message.
     """
+    import os
+    from google.cloud import storage
+
     try:
         db = _get_firestore_db()
         doc_id = title.lower().replace(" ", "_").replace(":", "")
@@ -133,9 +136,81 @@ def add_board_game_to_catalog(
             "rules_summary": rules_summary,
         }
         db.collection(COLLECTION_NAME).document(doc_id).set(data)
-        return f"Successfully added '{title}' to the Firestore board games catalog!"
+
+        # 1. Create local RAG markdown document
+        docs_dir = os.path.join(os.path.dirname(__file__), "..", "game_docs")
+        os.makedirs(docs_dir, exist_ok=True)
+        doc_content = (
+            f"# {title} — Official Game Document & Rulebook\n\n"
+            f"**Category / Genre:** {category}\n"
+            f"**Players:** {min_players}–{max_players} players\n"
+            f"**Play Time:** {play_time_mins} minutes\n\n"
+            f"## Overview & Description\n{description}\n\n"
+            f"## Official Rules & Win Conditions\n{rules_summary or 'No specific rules summary provided.'}\n"
+        )
+        local_doc_path = os.path.join(docs_dir, f"{doc_id}.md")
+        with open(local_doc_path, "w", encoding="utf-8") as f:
+            f.write(doc_content)
+
+        # 2. Upload RAG document to public Cloud Storage bucket
+        bucket_name = "board-game-host-media-401956137467"
+        try:
+            gcs_client = storage.Client(project=PROJECT_ID)
+            bucket = gcs_client.bucket(bucket_name)
+            blob = bucket.blob(f"game_docs/{doc_id}.md")
+            blob.upload_from_string(doc_content, content_type="text/markdown")
+            gcs_url = f"gs://{bucket_name}/game_docs/{doc_id}.md"
+        except Exception:
+            gcs_url = "Cloud Storage upload skipped"
+
+        return (
+            f"Successfully added '{title}' to catalog! "
+            f"Generated RAG game document at '{doc_id}.md' and uploaded to RAG store ({gcs_url})."
+        )
     except Exception as e:
-        return f"Error saving game to Firestore: {e}"
+        return f"Error saving game to Firestore and RAG store: {e}"
+
+
+def search_board_game_rag_docs(query: str) -> str:
+    """Searches the RAG document store of game rulebooks and rule guides to answer complex rule questions.
+
+    Args:
+        query: Rule, strategy, or game question to search across document corpus.
+
+    Returns:
+        Matched document passages grounded on game rulebooks.
+    """
+    import os
+
+    try:
+        docs_dir = os.path.join(os.path.dirname(__file__), "..", "game_docs")
+        if not os.path.exists(docs_dir):
+            return "No RAG game documents found in document store."
+
+        query_terms = [t.lower() for t in query.split() if len(t) > 2]
+        matched_chunks = []
+
+        for fname in os.listdir(docs_dir):
+            if fname.endswith(".md"):
+                fpath = os.path.join(docs_dir, fname)
+                with open(fpath, "r", encoding="utf-8") as f:
+                    content = f.read()
+
+                score = sum(content.lower().count(term) for term in query_terms)
+                if score > 0:
+                    matched_chunks.append((score, fname, content))
+
+        matched_chunks.sort(key=lambda x: x[0], reverse=True)
+        if not matched_chunks:
+            return f"No relevant RAG document passages found for query: '{query}'."
+
+        results = ["### 📚 RAG Document Retrieval Results:"]
+        for score, fname, content in matched_chunks[:3]:
+            results.append(f"--- Document: [{fname}] (Relevance Score: {score}) ---\n{content.strip()}")
+
+        return "\n\n".join(results)
+    except Exception as e:
+        return f"Error searching RAG document store: {e}"
 
 
 def log_game_session(

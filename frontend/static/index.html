@@ -482,16 +482,42 @@ function renderReply(b, parts) {
     }
     b.appendChild(textDiv);
 
-    // Auto-detect public mp4/webm video URLs and render inline video players
-    const videoUrlRegex = /(https:\/\/storage\.googleapis\.com\/[^\s<"]+?\.(?:mp4|webm))/gi;
-    let match;
+    // Auto-detect public mp4/webm/GCS video URLs and render interactive inline video players
     const foundUrls = new Set();
+    const videoUrlRegex = /(https?:\/\/[^\s<"'\)]+?\.(?:mp4|webm|m4v|mov)(?:\?[^\s<"'\)]*)?)|(https?:\/\/storage\.googleapis\.com\/[^\s<"'\)]+)/gi;
+    let match;
     while ((match = videoUrlRegex.exec(textStr)) !== null) {
-      foundUrls.add(match[1]);
+      const url = (match[1] || match[2] || "").replace(/[\.\,\)]+$/, "");
+      if (url) foundUrls.add(url);
     }
+    
+    // Also check any rendered anchor links inside textDiv
+    textDiv.querySelectorAll("a").forEach(a => {
+      if (/(mp4|webm|m4v|generated_videos|storage\.googleapis\.com)/i.test(a.href)) {
+        foundUrls.add(a.href);
+      }
+    });
+
     foundUrls.forEach(videoUrl => {
-      const vContainer = document.createElement("div");
-      vContainer.style.marginTop = "10px";
+      const vCard = document.createElement("div");
+      vCard.className = "video-player-card";
+      vCard.style.marginTop = "12px";
+      vCard.style.padding = "12px";
+      vCard.style.borderRadius = "12px";
+      vCard.style.background = "#1e293b";
+      vCard.style.color = "#f8fafc";
+      vCard.style.boxShadow = "0 8px 24px rgba(0,0,0,0.2)";
+
+      const vHeader = document.createElement("div");
+      vHeader.style.fontWeight = "600";
+      vHeader.style.fontSize = "0.9rem";
+      vHeader.style.marginBottom = "8px";
+      vHeader.style.display = "flex";
+      vHeader.style.alignItems = "center";
+      vHeader.style.gap = "6px";
+      vHeader.innerHTML = `<span class="material-symbols-outlined" style="color: #818cf8;">movie</span> <span>3D Animated Trailer Video</span>`;
+      vCard.appendChild(vHeader);
+
       const videoEl = document.createElement("video");
       videoEl.controls = true;
       videoEl.playsInline = true;
@@ -499,11 +525,20 @@ function renderReply(b, parts) {
       videoEl.loop = true;
       videoEl.muted = true;
       videoEl.src = videoUrl;
-      videoEl.style.maxWidth = "100%";
-      videoEl.style.borderRadius = "12px";
-      videoEl.style.boxShadow = "0 4px 14px rgba(0,0,0,0.12)";
-      vContainer.appendChild(videoEl);
-      b.appendChild(vContainer);
+      videoEl.style.width = "100%";
+      videoEl.style.maxHeight = "360px";
+      videoEl.style.borderRadius = "8px";
+      videoEl.style.backgroundColor = "#000000";
+      vCard.appendChild(videoEl);
+
+      const vFooter = document.createElement("div");
+      vFooter.style.marginTop = "6px";
+      vFooter.style.fontSize = "0.8rem";
+      vFooter.style.textAlign = "right";
+      vFooter.innerHTML = `<a href="${videoUrl}" target="_blank" rel="noopener" style="color: #a5b4fc; text-decoration: none;">🔗 Open Full HD Video</a>`;
+      vCard.appendChild(vFooter);
+
+      b.appendChild(vCard);
     });
   }
 

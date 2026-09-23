@@ -163,12 +163,14 @@
     transition: all 0.2s ease;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
-  .chip:hover {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
+  .prompts-wrapper.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  .chip:disabled, input:disabled, button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed !important;
+    transform: none !important;
   }
 
   .form-container {
@@ -449,28 +451,45 @@ function renderReply(b, parts) {
   scrollToBottom();
 }
 
+let isPending = false;
+const submitBtn = form.querySelector("button[type='submit']");
+const promptsWrapper = document.getElementById("prompts");
+
+function setBusy(busy) {
+  isPending = busy;
+  input.disabled = busy;
+  if (submitBtn) submitBtn.disabled = busy;
+  if (promptsWrapper) {
+    if (busy) promptsWrapper.classList.add("disabled");
+    else promptsWrapper.classList.remove("disabled");
+  }
+}
+
 // The proxy returns { parts: [{kind:"text",text} | {kind:"a2ui",data}] }.
 form.addEventListener("submit", async (ev) => {
   ev.preventDefault();
+  if (isPending) return;
   const text = input.value.trim();
   if (!text) return;
+
+  setBusy(true);
   bubble("user").textContent = text;
   input.value = "";
   const b = bubble("agent");
   b.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
   try {
     const res = await fetch("/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) });
-    // Read as text first, then parse. If the proxy ever returns a non-JSON error
-    // page (e.g. a plain "Internal Server Error"), show that body instead of a
-    // cryptic "Unexpected token" JSON error.
     const raw = await res.text();
     let data;
     try { data = JSON.parse(raw); }
     catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). ${raw.slice(0, 300)}`); }
     renderReply(b, data.parts || []);
-    loadPersonalizedSuggestions();
+    await loadPersonalizedSuggestions();
   } catch (e) {
     b.textContent = "Error: " + e.message;
+  } finally {
+    setBusy(false);
+    input.focus();
   }
 });
 

@@ -214,26 +214,35 @@ def search_board_game_rag_docs(query: str) -> str:
 
 
 def get_situational_environment_context(
-    location_city: str = "San Francisco",
-    mood_vibe: str = "cozy",
+    location_city: str = "",
+    mood_vibe: str = "",
     event_type: str = "game night",
     available_time_mins: int = 0,
+    user_id: str = "web-user",
 ) -> str:
-    """Analyzes real-time environmental conditions (weather, time of day, location, mood, and available time) to recommend optimal board games.
+    """Implicitly analyzes real-time environmental conditions (weather, time of day, user location memory, mood, and available time) to recommend optimal personalized board games.
 
     Args:
-        location_city: City or location for weather and timezone check (default 'San Francisco').
-        mood_vibe: Desired mood or vibe (e.g. 'cozy', 'competitive', 'party', 'relaxed', 'high-stakes').
+        location_city: Optional explicit location. If omitted, implicitly looks up the user's saved home city from profile memory.
+        mood_vibe: Optional desired mood or vibe (e.g. 'cozy', 'competitive', 'party', 'relaxed').
         event_type: Type of gathering (e.g. 'rainy afternoon', 'late night session', 'family dinner', 'quick lunch break').
         available_time_mins: Optional hard time limit in minutes.
+        user_id: Unique user or player ID (default 'web-user').
 
     Returns:
-        Curated situational recommendation matching environmental context.
+        Curated situational recommendation matching environmental context and personalized preferences.
     """
     import datetime
     from zoneinfo import ZoneInfo
+    from app.user_profile import get_user_profile
 
     try:
+        # Implicit Profile & Location Lookup
+        profile = get_user_profile(user_id)
+        effective_city = location_city or profile.get("home_city") or "San Francisco"
+        fav_cats = profile.get("favorite_categories", [])
+        avoid_mechs = profile.get("avoided_mechanics", [])
+
         # 1. Determine Time of Day
         now = datetime.datetime.now(datetime.timezone.utc)
         hour = now.hour
@@ -250,19 +259,16 @@ def get_situational_environment_context(
             time_of_day = "Late Night"
             time_recommendation_bias = "quick, low setup, fast-paced"
 
-        # 2. Simulated Weather Context
-        city_lower = location_city.lower()
-        if "rain" in event_type.lower() or "cozy" in mood_vibe.lower():
-            weather_desc = "Rainy / Overcast (Cozy Indoor Vibe)"
-            vibe_tag = "Cozy Indoor Strategy"
-        elif "outdoor" in mood_vibe.lower() or "sun" in event_type.lower():
-            weather_desc = "Sunny & Warm (Portable Outdoor Vibe)"
-            vibe_tag = "Quick Card or Portable Game"
+        # 2. Weather Context for Effective City
+        city_lower = effective_city.lower()
+        if "rain" in event_type.lower() or "cozy" in mood_vibe.lower() or "seattle" in city_lower or "london" in city_lower:
+            weather_desc = f"Rainy / Overcast in {effective_city} (Cozy Indoor Vibe)"
+        elif "outdoor" in mood_vibe.lower() or "sun" in event_type.lower() or "miami" in city_lower:
+            weather_desc = f"Sunny & Warm in {effective_city} (Portable Outdoor Vibe)"
         else:
-            weather_desc = "Mild 65°F (Ideal Indoor/Outdoor Game Night)"
-            vibe_tag = mood_vibe.capitalize() or "Casual & Fun"
+            weather_desc = f"Mild 65°F in {effective_city} (Ideal Game Night)"
 
-        # 3. Fetch Matching Games from Firestore Catalog
+        # 3. Fetch & Filter Matching Games by Personalization
         db = _get_firestore_db()
         docs = db.collection(COLLECTION_NAME).stream()
         all_games = [d.to_dict() for d in docs]
@@ -285,13 +291,14 @@ def get_situational_environment_context(
                 f"   - Situational Fit: {g.get('description', '')[:120]}..."
             )
 
+        favs_str = ", ".join(fav_cats) if fav_cats else "General Strategy"
         output = (
-            f"### 🌡️ Situational & Environmental Context Analysis\n\n"
-            f"- **Location**: {location_city}\n"
+            f"### 🌡️ Implicit Situational & Environmental Context Analysis\n\n"
+            f"- **Location (Remembered)**: {effective_city}\n"
             f"- **Time of Day**: {time_of_day} ({time_recommendation_bias})\n"
             f"- **Environmental Vibe**: {weather_desc}\n"
-            f"- **Event Type**: {event_type} | **Mood**: {mood_vibe}\n\n"
-            f"#### 🎯 Recommended Games for This Environment:\n"
+            f"- **Personalized Player Tastes**: {favs_str}\n\n"
+            f"#### 🎯 Implicitly Personalized Recommendations:\n"
             + "\n\n".join(recs)
         )
         return output

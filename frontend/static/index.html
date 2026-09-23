@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
 <style>
   :root {
     --accent: #6366f1;
@@ -117,7 +117,8 @@
     border: 1px solid var(--border);
     text-align: left;
     max-width: 82%;
-    line-height: 1.5;
+    line-height: 1.6;
+    word-break: break-word;
     box-shadow: 0 2px 6px rgba(0,0,0,0.03);
   }
   .msg.user .bubble {
@@ -132,6 +133,42 @@
   }
   .bubble p { margin: 0 0 0.5rem 0; }
   .bubble p:last-child { margin-bottom: 0; }
+  .bubble ul, .bubble ol {
+    margin: 0.4rem 0 0.6rem 1.2rem;
+    padding-left: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .bubble li {
+    margin-bottom: 0.2rem;
+    line-height: 1.5;
+    display: list-item;
+  }
+  .bubble h1, .bubble h2, .bubble h3, .bubble h4 {
+    margin: 0.6rem 0 0.4rem 0;
+    font-weight: 600;
+  }
+  .bubble code {
+    background: #f1f5f9;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.88em;
+    font-family: monospace;
+  }
+  .bubble pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 0.75rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+  }
+  .bubble pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+  }
   
   /* When the reply is an A2UI card, drop the bubble chrome so the card stands alone. */
   .bubble.rich { background: transparent; border: none; padding: 0; box-shadow: none; max-width: 100%; width: 100%; }
@@ -465,11 +502,9 @@ function setBusy(busy) {
   }
 }
 
-// The proxy returns { parts: [{kind:"text",text} | {kind:"a2ui",data}] }.
-form.addEventListener("submit", async (ev) => {
-  ev.preventDefault();
+async function submitPrompt(promptText) {
   if (isPending) return;
-  const text = input.value.trim();
+  const text = (promptText || input.value).trim();
   if (!text) return;
 
   setBusy(true);
@@ -491,13 +526,19 @@ form.addEventListener("submit", async (ev) => {
     setBusy(false);
     input.focus();
   }
+}
+
+// The proxy returns { parts: [{kind:"text",text} | {kind:"a2ui",data}] }.
+form.addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  submitPrompt();
 });
 
 async function loadPersonalizedSuggestions() {
   const wrapper = document.getElementById("prompts");
   if (!wrapper) return;
   try {
-    const res = await fetch("/api/suggestions");
+    const res = await fetch("/api/suggestions?user_id=web-user");
     if (!res.ok) return;
     const data = await res.json();
     if (data.suggestions && data.suggestions.length > 0) {
@@ -508,9 +549,10 @@ async function loadPersonalizedSuggestions() {
         btn.className = "chip";
         btn.textContent = item.label;
         btn.dataset.prompt = item.prompt;
-        btn.addEventListener("click", () => {
-          input.value = item.prompt;
-          form.requestSubmit();
+        btn.addEventListener("click", (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          submitPrompt(item.prompt);
         });
         wrapper.appendChild(btn);
       });

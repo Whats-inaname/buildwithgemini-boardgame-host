@@ -26,6 +26,7 @@ Run:
 
 import os
 import uuid
+import datetime
 
 import google.auth
 import google.auth.transport.requests
@@ -279,7 +280,7 @@ async def health_check():
     return JSONResponse({
         "status": "ok",
         "service": "board-game-frontend",
-        "agent_backend": AGENT_ENGINE_RESOURCE_NAME,
+        "agent_backend": RESOURCE,
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
     })
 

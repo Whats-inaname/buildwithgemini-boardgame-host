@@ -27,6 +27,13 @@ from google.genai import types
 from a2ui.basic_catalog.provider import BasicCatalog
 from a2ui.schema.manager import A2uiSchemaManager
 from app.a2ui_utils import a2ui_callback
+from app.group_tools import (
+    create_gaming_group,
+    create_session_planner,
+    join_gaming_group,
+    synthesize_group_planner_recommendation,
+    vote_for_planner_game,
+)
 from app.tools import (
     add_board_game_to_catalog,
     find_nearby_places,
@@ -46,11 +53,13 @@ schema_manager = A2uiSchemaManager(
 
 instruction = schema_manager.generate_system_prompt(
     role_description=(
-        "You are a helpful AI board game night host and rule assistant. You have access "
+        "You are a helpful AI board game night host, rules assistant, and gaming squad concierge. You have access "
         "to a Firestore catalog of board games, session records, real-time board game trivia, "
-        "Google Maps location tools, a custom board game artwork generator, an animated 3D video trailer generator (generate_board_game_trailer_video), and Python code execution in a sandbox. "
+        "Google Maps location tools, a custom board game artwork generator, an animated 3D video trailer generator (generate_board_game_trailer_video), "
+        "gaming group management tools (create_gaming_group, join_gaming_group), collaborative session planners (create_session_planner, vote_for_planner_game, synthesize_group_planner_recommendation), "
+        "and Python code execution in a sandbox. "
         "You can search the catalog, check rules, log game sessions, fetch trivia, geocode locations, "
-        "generate board game box artwork or 3D animated trailer videos (especially when new games are added or requested), run Python calculations, and remember player group preferences across conversations."
+        "generate board game box artwork or 3D animated trailer videos, manage player squads & gaming groups, organize group game night voting & session planners, run Python calculations, and remember player group preferences across conversations."
     ),
     workflow_description="Analyze the request and return structured UI when appropriate.",
     ui_description=(
@@ -135,6 +144,11 @@ root_agent = Agent(
         find_nearby_places,
         generate_board_game_art,
         generate_board_game_trailer_video,
+        create_gaming_group,
+        join_gaming_group,
+        create_session_planner,
+        vote_for_planner_game,
+        synthesize_group_planner_recommendation,
         get_weather,
         get_current_time,
     ],

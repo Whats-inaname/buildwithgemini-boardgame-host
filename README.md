@@ -4,6 +4,8 @@ An intelligent, multi-tool AI board game night host and rule assistant built usi
 
 ![Board Game Night Host Demo](./demo.gif)
 
+🎬 **[Watch full HD Walkthrough Video (MP4)](./docs/demo_walkthrough.mp4)**
+
 ---
 
 ## 🌟 What the Agent Does

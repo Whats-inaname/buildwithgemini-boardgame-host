@@ -240,6 +240,7 @@ async def get_personalized_suggestions(user_id: str = "web-user"):
             group_data = groups[0].to_dict()
             gname = group_data.get("group_name", "Friday Night Strategists")
             suggestions.append({"label": f"📅 Plan session for '{gname}'", "prompt": f"Start a session planner for gaming group '{gname}' with Catan, Wingspan, and Suzerain"})
+            suggestions.append({"label": f"🏆 '{gname}' Leaderboard", "prompt": f"Show the ELO leaderboard and tournament rankings for gaming squad '{gname}'"})
             suggestions.append({"label": f"👥 View '{gname}' squad members", "prompt": f"Who is currently in the gaming squad '{gname}'?"})
         else:
             suggestions.append({"label": "👥 Create Gaming Squad", "prompt": "Create a gaming group called 'Friday Night Strategists'"})

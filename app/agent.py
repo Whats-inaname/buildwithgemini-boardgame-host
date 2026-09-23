@@ -34,6 +34,7 @@ from app.group_tools import (
     synthesize_group_planner_recommendation,
     vote_for_planner_game,
 )
+from app.leaderboard_tools import get_squad_leaderboard, record_game_match_result
 from app.user_profile import set_user_profile
 from app.tools import (
     add_board_game_to_catalog,
@@ -161,6 +162,8 @@ root_agent = Agent(
         create_session_planner,
         vote_for_planner_game,
         synthesize_group_planner_recommendation,
+        record_game_match_result,
+        get_squad_leaderboard,
         get_weather,
         get_current_time,
     ],

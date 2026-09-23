@@ -10,7 +10,12 @@ An intelligent, multi-tool AI board game night host and rule assistant built usi
 
 ## 🌟 What the Agent Does
 
-The **Board Game Night Host** helps player groups organize game nights, recommend board games tailored to player counts and time constraints, summarize complex game rules, log game sessions, generate custom box art, and search for nearby board game venues.
+The **Board Game Night Host** helps player groups organize game nights, recommend board games tailored to player counts and time constraints, summarize complex game rules, log game sessions, generate custom box art, track ELO squad leaderboards, and search for nearby board game venues.
+
+### 🌐 Live Production Deployment
+* **Live Chat Frontend (Cloud Run)**: [https://board-game-frontend-401956137467.us-central1.run.app](https://board-game-frontend-401956137467.us-central1.run.app)
+* **Agent Engine Backend (Cloud Run)**: [https://board-game-host-401956137467.us-central1.run.app](https://board-game-host-401956137467.us-central1.run.app)
+* **GitHub Repository**: [https://github.com/Whats-inaname/buildwithgemini-boardgame-host](https://github.com/Whats-inaname/buildwithgemini-boardgame-host)
 
 ---
 
@@ -44,6 +49,10 @@ Based on the actual implementation in `app/` and `agents-cli-manifest.yaml`, the
   * `geocode_address` & `find_nearby_places`: Finds nearby board game cafes and gaming venues using Google Maps Places API.
 * **A2UI Rich Card System & FastAPI Proxy**:
   * Renders structured display cards (A2UI) in the frontend for game recommendations and catalog views.
+* **Inline 3D Video Player Cards (`frontend/static/index.html`)**:
+  * Auto-detects generated GCS/MP4 trailer links and embeds an interactive HTML5 `<video controls autoplay loop muted playsinline>` card directly inside chat bubbles.
+* **Intent-Aware Prompt Engineering (`app/agent.py`)**:
+  * Distinguishes casual greetings (`"hi"`, `"hello"`) from specific queries, responding with a warm host welcome acknowledging active squads without dumping unsolicited game lists.
 
 ---
 

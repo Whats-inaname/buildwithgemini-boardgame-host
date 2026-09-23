@@ -406,12 +406,19 @@ def generate_board_game_art(description: str, tool_context=None) -> str:
         return f"Error generating board game artwork: {e}"
 
 
-def generate_board_game_trailer_video(description: str, tool_context=None) -> str:
-    """Generates a short animated video or trailer for a board game or game component using Gemini Omni (gemini-omni-flash-preview),
-    saves it to artifacts, and uploads it to public Cloud Storage.
+def generate_board_game_trailer_video(
+    description: str,
+    game_category_or_genre: str = "",
+    style_adjustment: str = "",
+    tool_context=None,
+) -> str:
+    """Generates a context-aware 3D animated video trailer or rules intro for a board game using Gemini Omni (gemini-omni-flash-preview),
+    analyzing game genre and tone (e.g. serious/geopolitical vs. vibrant/cartoonish), with support for user fine-tuning corrections.
 
     Args:
-        description: Description of the board game video animation or trailer to generate (e.g. '3D animation of dice rolling on a board').
+        description: Description of the board game video animation or trailer (e.g. 'Intro video for Suzerain showing war room maps' or 'Ludo dice roll').
+        game_category_or_genre: Optional category or genre (e.g. 'Political Strategy', 'Party Game', 'Arcade', 'Fantasy').
+        style_adjustment: Optional refinement instruction from user (e.g. 'Make it darker and more cinematic', 'Add cartoon particles').
         tool_context: Optional ADK ToolContext provided automatically by the framework.
 
     Returns:
@@ -424,9 +431,27 @@ def generate_board_game_trailer_video(description: str, tool_context=None) -> st
     from google.cloud import storage
 
     try:
-        # 1. Generate video using gemini-omni-flash-preview in global region via Interactions API
+        # Contextual Tone Analysis
+        combined_text = f"{description} {game_category_or_genre}".lower()
+        if any(k in combined_text for k in ["serious", "political", "suzerain", "war", "history", "strategy", "dramatic"]):
+            tone_style = "Serious, dramatic, cinematic lighting, epic orchestral mood, high-stakes atmospheric aesthetic."
+        elif any(k in combined_text for k in ["arcade", "cyberpunk", "sci-fi", "deckbuilder", "retro"]):
+            tone_style = "Retro-futuristic arcade glow, vibrant neon synthwave aesthetic, dynamic energy."
+        elif any(k in combined_text for k in ["ludo", "party", "family", "dice", "casual", "fun", "kids"]):
+            tone_style = "Playful, bright, joyful, colorful cartoonish animation, upbeat and energetic tone."
+        elif any(k in combined_text for k in ["fantasy", "magic", "dragon", "quest", "dungeon"]):
+            tone_style = "Mystical fantasy atmosphere, magical glowing particle effects, grand adventure style."
+        else:
+            tone_style = "Vibrant, high-quality 3D board game cinematic animation style."
+
+        refinement_clause = f" Style refinement note: {style_adjustment}." if style_adjustment else ""
+
+        prompt = (
+            f"A short 3D animated board game trailer video for: {description}. "
+            f"Aesthetic Direction: {tone_style}{refinement_clause}"
+        )
+
         client = genai.Client(vertexai=True, location="global", project=PROJECT_ID)
-        prompt = f"A short 3D animated board game trailer video of: {description}"
         interaction = client.interactions.create(
             model="gemini-omni-flash-preview",
             input=prompt
@@ -460,7 +485,7 @@ def generate_board_game_trailer_video(description: str, tool_context=None) -> st
             except Exception as e:
                 pass
 
-        # 3. Upload bytes directly to public Cloud Storage bucket (without writing local file)
+        # 3. Upload bytes directly to public Cloud Storage bucket
         bucket_name = "board-game-host-media-401956137467"
         gcs_client = storage.Client(project=PROJECT_ID)
         bucket = gcs_client.bucket(bucket_name)

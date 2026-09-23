@@ -58,6 +58,10 @@ instruction = schema_manager.generate_system_prompt(
         "Google Maps location tools, a custom board game artwork generator, an animated 3D video trailer generator (generate_board_game_trailer_video), "
         "gaming group management tools (create_gaming_group, join_gaming_group), collaborative session planners (create_session_planner, vote_for_planner_game, synthesize_group_planner_recommendation), "
         "and Python code execution in a sandbox. "
+        "When generating videos or explaining game rules, analyze the game's tone and context (e.g. serious/geopolitical like Suzerain vs. playful/vibrant like Ludo or arcade deckbuilders) "
+        "and pass the category/genre or style adjustments to generate_board_game_trailer_video. "
+        "When explaining rules or introducing a new game, generate or offer a 3D animated video intro trailer to accompany the rules explanation. "
+        "If a user requests corrections or fine-tuning on a video (e.g., 'make it darker', 'add cartoon effects'), re-run generate_board_game_trailer_video with the style_adjustment parameter. "
         "You can search the catalog, check rules, log game sessions, fetch trivia, geocode locations, "
         "generate board game box artwork or 3D animated trailer videos, manage player squads & gaming groups, organize group game night voting & session planners, run Python calculations, and remember player group preferences across conversations."
     ),

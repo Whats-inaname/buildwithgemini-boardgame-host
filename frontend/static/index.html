@@ -409,6 +409,30 @@ function renderReply(b, parts) {
       textDiv.textContent = textStr;
     }
     b.appendChild(textDiv);
+
+    // Auto-detect public mp4/webm video URLs and render inline video players
+    const videoUrlRegex = /(https:\/\/storage\.googleapis\.com\/[^\s<"]+?\.(?:mp4|webm))/gi;
+    let match;
+    const foundUrls = new Set();
+    while ((match = videoUrlRegex.exec(textStr)) !== null) {
+      foundUrls.add(match[1]);
+    }
+    foundUrls.forEach(videoUrl => {
+      const vContainer = document.createElement("div");
+      vContainer.style.marginTop = "10px";
+      const videoEl = document.createElement("video");
+      videoEl.controls = true;
+      videoEl.playsInline = true;
+      videoEl.autoplay = true;
+      videoEl.loop = true;
+      videoEl.muted = true;
+      videoEl.src = videoUrl;
+      videoEl.style.maxWidth = "100%";
+      videoEl.style.borderRadius = "12px";
+      videoEl.style.boxShadow = "0 4px 14px rgba(0,0,0,0.12)";
+      vContainer.appendChild(videoEl);
+      b.appendChild(vContainer);
+    });
   }
 
   if (a2ui.length) {

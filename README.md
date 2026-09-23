@@ -12,9 +12,6 @@ An intelligent, multi-tool AI board game night host and rule assistant built usi
 
 The **Board Game Night Host** helps player groups organize game nights, recommend board games tailored to player counts and time constraints, summarize complex game rules, log game sessions, generate custom box art, track ELO squad leaderboards, and search for nearby board game venues.
 
-### 🌐 Live Production Deployment
-* **Live Chat Frontend (Cloud Run)**: [https://board-game-frontend-401956137467.us-central1.run.app](https://board-game-frontend-401956137467.us-central1.run.app)
-* **Agent Engine Backend (Cloud Run)**: [https://board-game-host-401956137467.us-central1.run.app](https://board-game-host-401956137467.us-central1.run.app)
 * **GitHub Repository**: [https://github.com/Whats-inaname/buildwithgemini-boardgame-host](https://github.com/Whats-inaname/buildwithgemini-boardgame-host)
 
 ---

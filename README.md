@@ -42,9 +42,10 @@ Based on the actual implementation in `app/` and `agents-cli-manifest.yaml`, the
 
 ---
 
-## 📋 Status of Planned Features
+## 📚 RAG Engine Document Search & Game Doc Generation
 
-* **Vertex AI RAG Engine Document Search**: *Planned, not yet implemented.*
+* **Automatic RAG Game Doc Generation**: Every game added via `add_board_game_to_catalog` automatically formats a complete rulebook document (`game_docs/<doc_id>.md`) and uploads it to Google Cloud Storage (`gs://board-game-host-media-401956137467/game_docs/`).
+* **Semantic RAG Passage Retrieval (`search_board_game_rag_docs`)**: Answers complex rule, strategy, and setup questions by performing semantic chunk retrieval across the game document store.
 
 ---
 

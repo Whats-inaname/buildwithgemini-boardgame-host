@@ -22,9 +22,10 @@ Based on the actual implementation in `app/` and `agents-cli-manifest.yaml`, the
   * `get_board_game_rules`: Fetches rules, setup steps, and complexity details for cataloged board games.
   * `add_board_game_to_catalog`: Allows adding new board games with custom rules to the Firestore database.
   * `log_game_session`: Records played game session results and scores into Firestore.
-* **Gaming Squads & Collaborative Session Planners (`app.group_tools`)**:
+* **Gaming Squads, Session Planners & ELO Leaderboards (`app.group_tools` & `app.leaderboard_tools`)**:
   * `create_gaming_group` & `join_gaming_group`: Organizes named player squads in Firestore.
   * `create_session_planner`, `vote_for_planner_game`, & `synthesize_group_planner_recommendation`: Launches game night voting sessions for player squads and synthesizes winning game decisions.
+  * `record_game_match_result` & `get_squad_leaderboard`: Tracks match outcomes, computes ELO rating gains/losses ($K=32$), tracks win streaks, and crowns squad champions.
 * **Environmental & Situational Context Engine (`get_situational_environment_context`)**:
   * Dynamically evaluates real-time weather, time of day, location, event type (e.g. cozy rainy afternoon, late night fast-paced session), and available time constraints to curate optimal game recommendations.
 * **Vertex AI Memory Bank**:

@@ -213,6 +213,63 @@ async def chat(req: Request):
     return JSONResponse({"parts": parts})
 
 
+@app.get("/api/suggestions")
+async def get_personalized_suggestions(user_id: str = "web-user"):
+    """Generates dynamic, personalized floating prompt suggestions based on user profiles, active gaming groups, and current context."""
+    import datetime
+    from google.cloud import firestore
+
+    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT", "qwiklabs-gcp-03-f00620733056")
+
+    suggestions = []
+    try:
+        db = firestore.Client(project=project_id)
+
+        # 1. User Profile Lookup
+        user_doc = db.collection("user_profiles").document(user_id).get()
+        home_city = "San Francisco"
+        fav_cats = ["Strategy"]
+        if user_doc.exists:
+            udata = user_doc.to_dict()
+            home_city = udata.get("home_city", home_city)
+            fav_cats = udata.get("favorite_categories", fav_cats)
+
+        # 2. Gaming Groups Lookup
+        groups = list(db.collection("gaming_groups").limit(3).stream())
+        if groups:
+            group_data = groups[0].to_dict()
+            gname = group_data.get("group_name", "Friday Night Strategists")
+            suggestions.append({"label": f"📅 Plan session for '{gname}'", "prompt": f"Start a session planner for gaming group '{gname}' with Catan, Wingspan, and Suzerain"})
+            suggestions.append({"label": f"👥 View '{gname}' squad members", "prompt": f"Who is currently in the gaming squad '{gname}'?"})
+        else:
+            suggestions.append({"label": "👥 Create Gaming Squad", "prompt": "Create a gaming group called 'Friday Night Strategists'"})
+
+        # 3. Time & Weather Context
+        now = datetime.datetime.now(datetime.timezone.utc)
+        hour = now.hour
+        if "seattle" in home_city.lower() or "london" in home_city.lower():
+            suggestions.append({"label": f"🌧️ Cozy game for {home_city}", "prompt": f"Recommend a cozy rainy day game for {home_city}"})
+        elif 17 <= hour < 23:
+            suggestions.append({"label": f"🌙 Evening Strategy for {home_city}", "prompt": f"Suggest an epic evening strategy game for 4 players in {home_city}"})
+        else:
+            suggestions.append({"label": f"🎲 Quick game for {home_city}", "prompt": f"Recommend a 4-player game under 60 mins suited for {home_city}"})
+
+        # 4. Favorite Genre Suggestion
+        fav_genre = fav_cats[0] if fav_cats else "Strategy"
+        suggestions.append({"label": f"✨ Best {fav_genre} Games", "prompt": f"What are the top rated {fav_genre} games in our catalog?"})
+        suggestions.append({"label": "🎬 Watch 3D Game Trailer", "prompt": "Generate a 3D animated trailer video for Suzerain Strategy Edition"})
+
+    except Exception:
+        suggestions = [
+            {"label": "👥 Create Gaming Squad", "prompt": "Create a gaming group called 'Friday Night Strategists'"},
+            {"label": "📅 Launch Game Night Planner", "prompt": "Start a session planner for 'Friday Night Strategists' this Saturday"},
+            {"label": "🌧️ Environmental Game Vibe", "prompt": "Recommend a cozy rainy day game for my environment"},
+            {"label": "🎲 4-Player Games", "prompt": "Recommend a game for 4 players (under 90 mins)"},
+        ]
+
+    return JSONResponse({"suggestions": suggestions})
+
+
 # Serve the chat UI (keep this mount last so /chat wins).
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")

@@ -468,21 +468,45 @@ form.addEventListener("submit", async (ev) => {
     try { data = JSON.parse(raw); }
     catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). ${raw.slice(0, 300)}`); }
     renderReply(b, data.parts || []);
+    loadPersonalizedSuggestions();
   } catch (e) {
     b.textContent = "Error: " + e.message;
   }
 });
 
-document.querySelectorAll(".chip").forEach(chip => {
-  chip.addEventListener("click", () => {
-    input.value = chip.dataset.prompt;
-    form.requestSubmit();
-  });
-});
+async function loadPersonalizedSuggestions() {
+  const wrapper = document.getElementById("prompts");
+  if (!wrapper) return;
+  try {
+    const res = await fetch("/api/suggestions");
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.suggestions && data.suggestions.length > 0) {
+      wrapper.innerHTML = "";
+      data.suggestions.forEach(item => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "chip";
+        btn.textContent = item.label;
+        btn.dataset.prompt = item.prompt;
+        btn.addEventListener("click", () => {
+          input.value = item.prompt;
+          form.requestSubmit();
+        });
+        wrapper.appendChild(btn);
+      });
+    }
+  } catch (e) {
+    console.warn("Failed to load personalized suggestions:", e);
+  }
+}
 
 document.getElementById("btnClear").addEventListener("click", () => {
   log.innerHTML = "";
 });
+
+// Load personalized floating suggestions on page start
+loadPersonalizedSuggestions();
 </script>
 </body>
 </html>

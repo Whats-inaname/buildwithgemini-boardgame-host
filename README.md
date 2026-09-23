@@ -25,6 +25,8 @@ Based on the actual implementation in `app/` and `agents-cli-manifest.yaml`, the
 * **Gaming Squads & Collaborative Session Planners (`app.group_tools`)**:
   * `create_gaming_group` & `join_gaming_group`: Organizes named player squads in Firestore.
   * `create_session_planner`, `vote_for_planner_game`, & `synthesize_group_planner_recommendation`: Launches game night voting sessions for player squads and synthesizes winning game decisions.
+* **Environmental & Situational Context Engine (`get_situational_environment_context`)**:
+  * Dynamically evaluates real-time weather, time of day, location, event type (e.g. cozy rainy afternoon, late night fast-paced session), and available time constraints to curate optimal game recommendations.
 * **Vertex AI Memory Bank**:
   * `PreloadMemoryTool` & durable memory callback: Persists player group preferences (e.g. favorite games, player counts) across chat sessions.
 * **Vertex AI Gemini Image Generation (`gemini-3.1-flash-lite-image`)**:

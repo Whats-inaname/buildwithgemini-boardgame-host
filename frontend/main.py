@@ -271,6 +271,19 @@ async def get_personalized_suggestions(user_id: str = "web-user"):
     return JSONResponse({"suggestions": suggestions})
 
 
+@app.get("/health")
+@app.get("/readiness")
+@app.get("/api/health")
+async def health_check():
+    """Liveness probe endpoint for Cloud Run and load balancers."""
+    return JSONResponse({
+        "status": "ok",
+        "service": "board-game-frontend",
+        "agent_backend": AGENT_ENGINE_RESOURCE_NAME,
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
+    })
+
+
 # Serve the chat UI (keep this mount last so /chat wins).
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")

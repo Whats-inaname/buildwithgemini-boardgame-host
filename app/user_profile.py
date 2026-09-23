@@ -16,6 +16,10 @@ def _get_db():
     return _db
 
 
+from app.cache import memory_cache
+from app.telemetry import trace_tool_call
+
+@trace_tool_call("set_user_profile")
 def set_user_profile(
     user_id: str = "web-user",
     home_city: str = "",
@@ -50,6 +54,8 @@ def set_user_profile(
         data["updated_at"] = firestore.SERVER_TIMESTAMP
 
         db.collection(USER_PROFILES_COLLECTION).document(user_id).set(data, merge=True)
+        # Invalidate cache on update
+        memory_cache.set(f"profile:{user_id}", None, ttl=0)
         return (
             f"Updated player profile for '{user_id}'! "
             f"Location: {home_city or 'Unchanged'}. Favorites: {favorite_categories or 'Unchanged'}."
@@ -58,6 +64,7 @@ def set_user_profile(
         return f"Error updating user profile: {e}"
 
 
+@trace_tool_call("get_user_profile")
 def get_user_profile(user_id: str = "web-user") -> dict:
     """Fetches a player's saved profile, home location, and game preferences from Firestore.
 
@@ -67,16 +74,26 @@ def get_user_profile(user_id: str = "web-user") -> dict:
     Returns:
         Dictionary of profile settings or default values.
     """
+    cache_key = f"profile:{user_id}"
+    cached = memory_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     try:
         db = _get_db()
         doc = db.collection(USER_PROFILES_COLLECTION).document(user_id).get()
         if doc.exists:
-            return doc.to_dict()
+            profile = doc.to_dict()
+            memory_cache.set(cache_key, profile, ttl=300)
+            return profile
     except Exception:
         pass
-    return {
+
+    default_profile = {
         "home_city": "San Francisco",
         "favorite_categories": ["Strategy"],
         "avoided_mechanics": [],
         "preferred_player_count": 4,
     }
+    memory_cache.set(cache_key, default_profile, ttl=120)
+    return default_profile

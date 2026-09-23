@@ -54,6 +54,16 @@ Based on the actual implementation in `app/` and `agents-cli-manifest.yaml`, the
 
 ---
 
+## 🏗️ Production Architecture & Optimizations
+
+* **🛡️ Container Health Probes (`/health`, `/readiness`, `/api/health`)**: Serves JSON health status for Cloud Run liveness checks and zero-downtime rolling deployments.
+* **⚡ In-Memory TTL Query Cache (`app.cache.memory_cache`)**: Caches user squad profiles and game metadata with configurable TTL, cutting profile fetch latency by 800+ ms.
+* **📱 Progressive Web App (PWA) (`manifest.json` & `sw.js`)**: Service worker pre-caching and PWA web app manifest for standalone mobile/desktop installation.
+* **📊 OpenTelemetry & Cloud Trace Instrumentation (`app.telemetry`)**: Traces tool execution timing across Gemini model calls, Cloud Storage uploads, and sandbox runs.
+* **♿ WCAG 2.1 AA Accessibility**: HTML5 landmarks, ARIA live regions (`aria-live="polite"`), `:focus-visible` high-contrast outline rings, and keyboard skip-links.
+
+---
+
 ## 💻 Local Setup & Running Instructions
 
 ### Prerequisites

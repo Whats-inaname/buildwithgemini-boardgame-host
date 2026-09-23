@@ -20,8 +20,11 @@ Based on the actual implementation in `app/` and `agents-cli-manifest.yaml`, the
 * **Firestore Catalog & Session Store (`google.cloud.firestore`)**:
   * `search_board_games`: Queries the Firestore `board_games` database filtering by player count, duration, and category.
   * `get_board_game_rules`: Fetches rules, setup steps, and complexity details for cataloged board games.
-  * `add_board_game_to_catalog`: Allows adding new board games to the Firestore database.
+  * `add_board_game_to_catalog`: Allows adding new board games with custom rules to the Firestore database.
   * `log_game_session`: Records played game session results and scores into Firestore.
+* **Gaming Squads & Collaborative Session Planners (`app.group_tools`)**:
+  * `create_gaming_group` & `join_gaming_group`: Organizes named player squads in Firestore.
+  * `create_session_planner`, `vote_for_planner_game`, & `synthesize_group_planner_recommendation`: Launches game night voting sessions for player squads and synthesizes winning game decisions.
 * **Vertex AI Memory Bank**:
   * `PreloadMemoryTool` & durable memory callback: Persists player group preferences (e.g. favorite games, player counts) across chat sessions.
 * **Vertex AI Gemini Image Generation (`gemini-3.1-flash-lite-image`)**:

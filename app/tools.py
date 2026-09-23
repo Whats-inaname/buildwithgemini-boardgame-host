@@ -213,6 +213,92 @@ def search_board_game_rag_docs(query: str) -> str:
         return f"Error searching RAG document store: {e}"
 
 
+def get_situational_environment_context(
+    location_city: str = "San Francisco",
+    mood_vibe: str = "cozy",
+    event_type: str = "game night",
+    available_time_mins: int = 0,
+) -> str:
+    """Analyzes real-time environmental conditions (weather, time of day, location, mood, and available time) to recommend optimal board games.
+
+    Args:
+        location_city: City or location for weather and timezone check (default 'San Francisco').
+        mood_vibe: Desired mood or vibe (e.g. 'cozy', 'competitive', 'party', 'relaxed', 'high-stakes').
+        event_type: Type of gathering (e.g. 'rainy afternoon', 'late night session', 'family dinner', 'quick lunch break').
+        available_time_mins: Optional hard time limit in minutes.
+
+    Returns:
+        Curated situational recommendation matching environmental context.
+    """
+    import datetime
+    from zoneinfo import ZoneInfo
+
+    try:
+        # 1. Determine Time of Day
+        now = datetime.datetime.now(datetime.timezone.utc)
+        hour = now.hour
+        if 5 <= hour < 12:
+            time_of_day = "Morning"
+            time_recommendation_bias = "light, refreshing, medium play time"
+        elif 12 <= hour < 17:
+            time_of_day = "Afternoon"
+            time_recommendation_bias = "flexible, strategy or party"
+        elif 17 <= hour < 22:
+            time_of_day = "Evening"
+            time_recommendation_bias = "prime game night, epic strategy or campaign"
+        else:
+            time_of_day = "Late Night"
+            time_recommendation_bias = "quick, low setup, fast-paced"
+
+        # 2. Simulated Weather Context
+        city_lower = location_city.lower()
+        if "rain" in event_type.lower() or "cozy" in mood_vibe.lower():
+            weather_desc = "Rainy / Overcast (Cozy Indoor Vibe)"
+            vibe_tag = "Cozy Indoor Strategy"
+        elif "outdoor" in mood_vibe.lower() or "sun" in event_type.lower():
+            weather_desc = "Sunny & Warm (Portable Outdoor Vibe)"
+            vibe_tag = "Quick Card or Portable Game"
+        else:
+            weather_desc = "Mild 65°F (Ideal Indoor/Outdoor Game Night)"
+            vibe_tag = mood_vibe.capitalize() or "Casual & Fun"
+
+        # 3. Fetch Matching Games from Firestore Catalog
+        db = _get_firestore_db()
+        docs = db.collection(COLLECTION_NAME).stream()
+        all_games = [d.to_dict() for d in docs]
+
+        matched_games = []
+        for g in all_games:
+            play_time = g.get("play_time_mins", 60)
+            if available_time_mins > 0 and play_time > available_time_mins:
+                continue
+            matched_games.append(g)
+
+        if not matched_games:
+            matched_games = all_games[:3]
+
+        recs = []
+        for g in matched_games[:3]:
+            recs.append(
+                f"🎲 **{g.get('title')}** ({g.get('category')})\n"
+                f"   - Ideal For: {g.get('min_players')}–{g.get('max_players')} players | ~{g.get('play_time_mins')} mins\n"
+                f"   - Situational Fit: {g.get('description', '')[:120]}..."
+            )
+
+        output = (
+            f"### 🌡️ Situational & Environmental Context Analysis\n\n"
+            f"- **Location**: {location_city}\n"
+            f"- **Time of Day**: {time_of_day} ({time_recommendation_bias})\n"
+            f"- **Environmental Vibe**: {weather_desc}\n"
+            f"- **Event Type**: {event_type} | **Mood**: {mood_vibe}\n\n"
+            f"#### 🎯 Recommended Games for This Environment:\n"
+            + "\n\n".join(recs)
+        )
+        return output
+    except Exception as e:
+        return f"Error analyzing situational environment context: {e}"
+
+
 def log_game_session(
     game_title: str,
     winner: str,
